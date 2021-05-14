@@ -27,13 +27,28 @@ impl Window {
             .with_decorations(true)
             .with_transparent(true);
 
-        let gl_context = ContextBuilder::new()
-            .with_gl(glutin::GlRequest::GlThenGles {
-                opengl_version: (3, 2),
-                opengles_version: (3, 0),
-            })
-            .build_windowed(window_builder, &event_loop)
-            .unwrap();
+        let gl_context = match ContextBuilder::new().with_multisampling(4).with_depth_buffer(2).build_windowed(window_builder.clone(), &event_loop)
+        {
+            Ok(d) => d,
+            Err(err1) => match glutin::ContextBuilder::new().build_windowed(window_builder, &event_loop)
+            {
+                Ok(d) => {
+                    println!("Preferred glutin context failed, falling back on default");
+                    d
+                }
+                Err(err2) => panic!("Can't create an OpenGL window. Please file an issue at https://github.com/dabreegster/abstreet/issues/ and include output.txt. First attempt {}, second attempt {}", err1, err2),
+            }
+        };
+
+        // let gl_context = ContextBuilder::new()
+        // .with_gl(glutin::GlRequest::GlThenGles {
+        // opengl_version: (3, 2),
+        // opengles_version: (3, 0),
+        // })
+        // .with_multisampling(4)
+        // .with_depth_buffer(24)
+        // .build_windowed(window_builder, &event_loop)
+        // .unwrap();
 
         let gl_context = unsafe { gl_context.make_current().unwrap() };
 
